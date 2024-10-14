@@ -1,0 +1,29 @@
+name: Update README with Random Quote
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight (UTC)
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate random quote
+        run: |
+          QUOTE=$(jq -r '.[] | .quote + " - " + .author' quotes.json | shuf -n 1)
+          echo "$QUOTE" > quote.txt
+
+      - name: Update README
+        run: |
+          sed -i '/<!-- QUOTE_START -->/,/<!-- QUOTE_END -->/c\<!-- QUOTE_START -->\n'"$(cat quote.txt)"'\n<!-- QUOTE_END -->' README.md
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Updated quote in README"
+          git push
